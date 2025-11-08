@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>時間感覚テスト ver.6</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <style>
+        /* --- カラーパレットと基本設定 --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg-color: rgba(255, 255, 255, 0.75);
+            --modal-bg-color: rgba(255, 255, 255, 0.95);
+            --text-color: #1c1e21;
+            --text-secondary-color: #65676b;
+            --primary-color: #007bff;
+            --primary-hover-color: #0056b3;
+            --primary-active-bg: rgba(0, 123, 255, 0.1);
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --font-family: 'Roboto', sans-serif;
+            --shadow-color: rgba(0, 0, 0, 0.15);
+            --border-color: rgba(0, 0, 0, 0.18);
+            --glow-1: #007bff;
+            --glow-2: #28a745;
+            --glow-3: #ffc107;
+            --glow-4: #dc3545;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --card-bg-color: rgba(28, 28, 30, 0.75);
+                --modal-bg-color: rgba(40, 42, 45, 0.98);
+                --text-color: #e4e6eb;
+                --text-secondary-color: #b0b3b8;
+                --primary-color: #0d8eff;
+                --primary-hover-color: #007bff;
+                --primary-active-bg: rgba(13, 142, 255, 0.15);
+                --shadow-color: rgba(0, 0, 0, 0.5);
+                --border-color: rgba(255, 255, 255, 0.2);
+                --glow-1: #0d8eff;
+                --glow-2: #34c759;
+                --glow-3: #ff9500;
+                --glow-4: #ff3b30;
+            }
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; line-height: 1.6; transition: background-color 0.3s, color 0.3s; overflow-x: hidden; position: relative;
+        }
+
+        /* --- 動的な背景 (さらに高速化 & ガラス効果) --- */
+        .background-shapes { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .shape { position: absolute; border-radius: 50%; opacity: 0.4; filter: blur(100px); }
+        .shape1 { width: 450px; height: 450px; background: var(--glow-1); top: -80px; left: -120px; animation: move-shape1 8s infinite alternate ease-in-out; }
+        .shape2 { width: 400px; height: 400px; background: var(--glow-2); bottom: -100px; right: -150px; animation: move-shape2 7s infinite alternate ease-in-out; }
+        .shape3 { width: 300px; height: 300px; background: var(--glow-3); top: 15%; right: 10%; animation: move-shape3 10s infinite alternate ease-in-out; }
+        .shape4 { width: 250px; height: 250px; background: var(--glow-4); bottom: 25%; left: 5%; animation: move-shape4 6s infinite alternate ease-in-out; }
+        @keyframes move-shape1 { from { transform: translate(0, 0) scale(1) rotate(0deg); } to { transform: translate(120px, 180px) scale(1.2) rotate(100deg); } }
+        @keyframes move-shape2 { from { transform: translate(0, 0) scale(1.2) rotate(0deg); } to { transform: translate(-180px, -120px) scale(1) rotate(-100deg); } }
+        @keyframes move-shape3 { from { transform: translate(0, 0) scale(1) rotate(45deg); } to { transform: translate(-100px, 150px) scale(1.3) rotate(-45deg); } }
+        @keyframes move-shape4 { from { transform: translate(0, 0) scale(1.1) rotate(-30deg); } to { transform: translate(150px, -100px) scale(0.9) rotate(70deg); } }
+
+        /* --- メインコンテナ --- */
+        .container { width: 90%; max-width: 450px; padding: 2.5rem; background-color: var(--card-bg-color); border-radius: 24px; box-shadow: 0 8px 32px 0 var(--shadow-color); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); border: 1px solid var(--border-color); z-index: 1; text-align: center; margin: 4rem 0; display: flex; flex-direction: column; gap: 2rem; }
+        h1 { font-size: 2.2rem; font-weight: 700; }
+        .setting-section { text-align: left; }
+        .section-title-wrapper { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .section-title { font-size: 1.1rem; font-weight: 500; color: var(--text-secondary-color); }
+        .icon-btn { background: none; border: none; cursor: pointer; padding: 0.25rem; color: var(--text-secondary-color); display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background-color 0.2s, color 0.2s; }
+        .icon-btn:hover { background-color: var(--primary-active-bg); color: var(--primary-color); }
+        .icon-btn svg { width: 20px; height: 20px; }
+        .target-time-label { font-size: 0.9rem; margin-bottom: 0.25rem; color: var(--text-color); }
+        .target-time-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+        .target-time-input { width: 100%; padding: 1rem; font-size: 2.5rem; font-weight: 700; text-align: center; border: 2px solid var(--border-color); border-radius: 12px; background-color: var(--bg-color); color: var(--text-color); transition: border-color 0.3s, box-shadow 0.3s; -moz-appearance: textfield; }
+        .target-time-input::-webkit-outer-spin-button, .target-time-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .target-time-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 20%, transparent); }
+        .time-unit { font-size: 1.2rem; font-weight: 500; color: var(--text-secondary-color); }
+        .mode-selection { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .mode-button { padding: 1rem; border-radius: 12px; border: 2px solid var(--border-color); background-color: transparent; color: var(--text-color); cursor: pointer; transition: border-color 0.3s, background-color 0.3s; text-align: left; }
+        .mode-button.active { border-color: var(--primary-color); background-color: var(--primary-active-bg); }
+        .mode-button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .mode-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .mode-description { font-size: 0.85rem; color: var(--text-secondary-color); line-height: 1.4; }
+        .timer-display { font-size: 4.5rem; font-weight: 300; letter-spacing: 2px; color: var(--text-color); transition: opacity 0.4s, transform 0.4s; margin: 0.5rem 0; }
+        .timer-display.hidden { opacity: 0; transform: scale(0.95); height: 0; margin: 0; overflow: hidden; }
+        .control-button { width: 100%; padding: 1rem; font-size: 1.5rem; font-weight: 700; color: white; background-color: var(--primary-color); border: none; border-radius: 12px; cursor: pointer; transition: background-color 0.3s, transform 0.1s; }
+        .control-button.stop { background-color: var(--danger-color); }
+        .control-button:hover { background-color: var(--primary-hover-color); }
+        .control-button.stop:hover { background-color: color-mix(in srgb, var(--danger-color) 80%, black); }
+        .control-button:active { transform: scale(0.98); }
+        .results { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; height: 0; overflow: hidden; width: 100%; }
+        .results.show { opacity: 1; transform: translateY(0); height: auto; }
+        .result-item { display: flex; justify-content: space-between; padding: 0.75rem 0; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); }
+        .result-item:last-child { border-bottom: none; }
+        .result-label { color: var(--text-secondary-color); }
+        .result-value { font-weight: 700; }
+        .analysis-button-wrapper { margin-top: 1.5rem; display: none; }
+        .analysis-button { display: inline-flex; align-items: center; gap: 0.5rem; background-color: var(--primary-active-bg); color: var(--primary-color); border: 1px solid var(--primary-color); padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+        .analysis-button:hover { background-color: var(--primary-color); color: white; }
+        .analysis-button svg { width: 18px; height: 18px; }
+
+        /* --- モーダル --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 100; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content { background-color: var(--modal-bg-color); padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 90%; max-width: 500px; transform: scale(0.95); transition: transform 0.3s; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; }
+        .modal-close-btn { color: var(--text-secondary-color); background: none; border: none; cursor: pointer; padding: 0.5rem; }
+        .modal-close-btn svg { width: 24px; height: 24px; }
+        .guide-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .guide-table th, .guide-table td { padding: 0.75rem; border-bottom: 1px solid var(--border-color); }
+        .guide-table th { font-weight: 700; color: var(--text-secondary-color); }
+        .guide-table tr:last-child td { border-bottom: none; }
+        .guide-table .evaluation-col { font-weight: 500; }
+        #score-chart-container { width: 100%; height: 220px; }
+        .analysis-summary { text-align: center; margin: 1.5rem 0; }
+        .analysis-evaluation-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .analysis-evaluation-desc { font-size: 1rem; color: var(--text-secondary-color); line-height: 1.5; }
+        .analysis-details { margin-top: 2rem; text-align: left;}
+        .details-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; }
+
+    </style>
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape shape1"></div> <div class="shape shape2"></div> <div class="shape shape3"></div> <div class="shape shape4"></div>
+    </div>
+
+    <div class="container">
+        <h1>時間感覚テスト</h1>
+        <div class="setting-section">
+            <div class="section-title-wrapper"><h2 class="section-title">目標時間の設定</h2></div>
+            <p class="target-time-label">目標とする秒数</p>
+            <div class="target-time-wrapper">
+                <input type="number" id="target-time-input" class="target-time-input" value="10" min="1" step="0.1">
+                <span class="time-unit">秒</span>
+            </div>
+        </div>
+        <div class="setting-section">
+            <div class="section-title-wrapper">
+                <h2 class="section-title">テストモードの選択</h2>
+                <button class="icon-btn" id="show-guide-btn" aria-label="スコアの目安を見る">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/></svg>
+                </button>
+            </div>
+            <div class="mode-selection">
+                <button id="blind-mode-btn" class="mode-button">
+                    <div class="mode-title">目隠しモード</div><p class="mode-description">画面にタイマーを表示しません。</p>
+                </button>
+                <button id="watch-mode-btn" class="mode-button active">
+                    <div class="mode-title">時計確認モード</div><p class="mode-description">テスト中に経過時間が表示されます。</p>
+                </button>
+            </div>
+        </div>
+        <div id="timer-display" class="timer-display">0.000</div>
+        <button id="control-button" class="control-button">テスト開始</button>
+        <div id="results" class="results">
+            <div class="result-item"><span class="result-label">結果</span><span id="result-time" class="result-value">0.000 秒</span></div>
+            <div class="result-item"><span class="result-label">誤差</span><span id="result-diff" class="result-value">0.000 秒</span></div>
+            <div id="analysis-button-wrapper" class="analysis-button-wrapper">
+                <button id="show-analysis-btn" class="analysis-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-graph-up" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M0 0h1v15h15v1H0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07"/></svg>
+                    <span>詳細な分析を見る</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="guide-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">評価とスコアの目安</h3>
+                <button id="close-guide-modal-btn" class="modal-close-btn" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button>
+            </div>
+            <table class="guide-table"><thead><tr><th>評価</th><th>スコア</th><th>誤差の目安 (目標時間比)</th></tr></thead>
+                <tbody>
+                    <tr><td class="evaluation-col" style="color:var(--success-color)">神の領域</td><td>100</td><td>1% 以内</td></tr>
+                    <tr><td class="evaluation-col" style="color:var(--success-color)">超一流</td><td>95-99</td><td>3% 以内</td></tr>
+                    <tr><td class="evaluation-col" style="color:var(--primary-color)">一流</td><td>85-94</td><td>5% 以内</td></tr>
+                    <tr><td class="evaluation-col" style="color:var(--primary-color)">かなりの腕前</td><td>70-84</td><td>10% 以内</td></tr>
+                    <tr><td class="evaluation-col" style="color:var(--warning-color)">平均レベル</td><td>50-69</td><td>20% 以内</td></tr>
+                    <tr><td class="evaluation-col" style="color:var(--danger-color)">修行中</td><td>0-49</td><td>21% 以上</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="analysis-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">詳細分析</h3>
+                <button id="close-analysis-modal-btn" class="modal-close-btn" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button>
+            </div>
+            <div id="score-chart-container"></div>
+            <div class="analysis-summary">
+                <h4 id="analysis-evaluation-title" class="analysis-evaluation-title"></h4>
+                <p id="analysis-evaluation-desc" class="analysis-evaluation-desc"></p>
+            </div>
+            <div class="analysis-details">
+                <h5 class="details-title">パーソナルアドバイス</h5>
+                <div id="analysis-advice"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM要素
+        const targetTimeInput = document.getElementById('target-time-input'), blindModeBtn = document.getElementById('blind-mode-btn'), watchModeBtn = document.getElementById('watch-mode-btn'), timerDisplay = document.getElementById('timer-display'), controlButton = document.getElementById('control-button'), resultsContainer = document.getElementById('results'), resultTimeEl = document.getElementById('result-time'), resultDiffEl = document.getElementById('result-diff'), analysisButtonWrapper = document.getElementById('analysis-button-wrapper'), showGuideBtn = document.getElementById('show-guide-btn'), guideModal = document.getElementById('guide-modal'), closeGuideModalBtn = document.getElementById('close-guide-modal-btn'), showAnalysisBtn = document.getElementById('show-analysis-btn'), analysisModal = document.getElementById('analysis-modal'), closeAnalysisModalBtn = document.getElementById('close-analysis-modal-btn'), analysisEvaluationTitle = document.getElementById('analysis-evaluation-title'), analysisEvaluationDesc = document.getElementById('analysis-evaluation-desc'), analysisAdvice = document.getElementById('analysis-advice');
+        
+        // 状態変数
+        let startTime = 0, timerId = null, isRunning = false, elapsedTime = 0, targetTime = parseFloat(targetTimeInput.value), testMode = 'watch', lastAnalysisData = null;
+
+        const updateTimer = () => {
+            if (testMode === 'watch') timerDisplay.textContent = ((Date.now() - startTime) / 1000).toFixed(3);
+            timerId = requestAnimationFrame(updateTimer);
+        };
+
+        const startTimer = () => {
+            if (isRunning) return;
+            startTime = Date.now(); isRunning = true;
+            controlButton.textContent = 'ストップ！'; controlButton.classList.add('stop');
+            resultsContainer.classList.remove('show'); analysisButtonWrapper.style.display = 'none';
+            timerDisplay.classList.toggle('hidden', testMode === 'blind');
+            targetTimeInput.disabled = true; blindModeBtn.disabled = true; watchModeBtn.disabled = true;
+            timerId = requestAnimationFrame(updateTimer);
+        };
+        
+        const stopTimer = () => {
+            if (!isRunning) return;
+            cancelAnimationFrame(timerId); isRunning = false;
+            controlButton.textContent = 'テスト開始'; controlButton.classList.remove('stop');
+            elapsedTime = (Date.now() - startTime) / 1000;
+            timerDisplay.textContent = elapsedTime.toFixed(3);
+            timerDisplay.classList.remove('hidden');
+            targetTimeInput.disabled = false; blindModeBtn.disabled = false; watchModeBtn.disabled = false;
+            showResults();
+        };
+
+        const showResults = () => {
+            const diff = Math.abs(elapsedTime - targetTime);
+            const percentageDiff = (diff / targetTime) * 100;
+            lastAnalysisData = getAnalysisData(percentageDiff, testMode);
+            
+            resultTimeEl.textContent = `${elapsedTime.toFixed(3)} 秒`;
+            resultDiffEl.textContent = `${diff.toFixed(3)} 秒`;
+            
+            analysisEvaluationTitle.textContent = lastAnalysisData.title;
+            analysisEvaluationDesc.textContent = lastAnalysisData.desc;
+            analysisAdvice.innerHTML = lastAnalysisData.advice;
+            
+            const titleColor = lastAnalysisData.score >= 85 ? 'var(--success-color)' : lastAnalysisData.score >= 70 ? 'var(--primary-color)' : lastAnalysisData.score >= 50 ? 'var(--warning-color)' : 'var(--danger-color)';
+            analysisEvaluationTitle.style.color = titleColor;
+
+            resultsContainer.classList.add('show');
+            analysisButtonWrapper.style.display = 'block';
+        };
+
+        const getAnalysisData = (pDiff, mode) => {
+            let score, title, desc, advice;
+
+            if (pDiff <= 1) { score = 100; title = '神の領域'; }
+            else if (pDiff <= 3) { score = 95; title = '超一流'; }
+            else if (pDiff <= 5) { score = 85; title = '一流'; }
+            else if (pDiff <= 10) { score = 70; title = 'かなりの腕前'; }
+            else if (pDiff <= 20) { score = 50; title = '平均レベル'; }
+            else { score = Math.max(0, 40 - Math.floor(pDiff)); title = '修行中'; }
+
+            if (mode === 'blind') {
+                if (score >= 85) { desc = "驚異的な体内時計の持ち主。視覚情報なしでこの精度は、卓越した集中力の証です。"; advice = "<p><strong>あなたの強み:</strong> 研ぎ澄まされた内的感覚と高い集中力です。外部の情報に惑わされず、自分の中の確固たるリズム感を信じることができます。</p><p><strong>次のステップ:</strong> より長い時間（30秒や60秒）の目隠しモードに挑戦し、その驚異的な持続力を試してみましょう。</p>"; }
+                else if (score >= 50) { desc = "目隠しモードで平均以上の成績。優れた時間感覚のポテンシャルを秘めています。"; advice = "<p><strong>あなたの強み:</strong> 視覚に頼らずとも、時間をかなり正確に測れる感覚が育っています。これは集中力の高さを示しています。</p><p><strong>次のステップ:</strong> 同じ目標時間で繰り返し挑戦し、感覚の再現性を高めるトレーニングが効果的です。自信がつけば、スコアはさらに伸びるでしょう。</p>"; }
+                else { desc = "目隠しモードは難しい挑戦です。この経験が、あなたの時間感覚を鍛える第一歩になります。"; advice = "<p><strong>アドバイス:</strong> まずは時計確認モードで目標時間のリズムを身体で覚え、再度挑戦してみましょう。</p><p><strong>ヒント:</strong> 心の中で「いーち、にー、さーん…」とゆっくり数える、足で一定のリズムを刻むなど、自分なりの方法を見つけるのが近道です。</p>"; }
+            } else { // watch mode
+                if (score >= 85) { desc = "時計を見ながらでも、この誤差の少なさは素晴らしい。正確な操作能力と反応速度の賜物です。"; advice = "<p><strong>あなたの強み:</strong> 優れた判断力と、思った通りに体を動かせる精密な操作能力（運動能力）です。目と手の協調が非常にスムーズです。</p><p><strong>次のステップ:</strong> 同じ目標時間で目隠しモードに挑戦し、あなたの真の体内時計を測定してみませんか？新たな才能が開花するかもしれません。</p>"; }
+                else if (score >= 50) { desc = "時計の補助をうまく使い、安定した結果を出せました。良いリズム感を持っています。"; advice = "<p><strong>あなたの強み:</strong> 視覚情報を的確に処理し、適切なタイミングで行動に移す能力があります。これは多くの場面で役立つスキルです。</p><p><strong>次のステップ:</strong> 目標時間を0.5秒や0.1秒といった細かい単位で変更し、様々なリズムへの対応力を鍛えることで、さらに精度が向上します。</p>"; }
+                else { desc = "目標達成まであと一歩！焦らず、自分のタイミングを掴む練習を続けましょう。"; advice = "<p><strong>アドバイス:</strong> ストップボタンを押す少し前から、心の中で「3, 2, 1, STOP!」のようにカウントダウンを始めると、押すタイミングの精度が上がります。</p><p><strong>ヒント:</strong> これはゲームです。リラックスして、ハイスコアを目指して楽しむことが何よりの上達の秘訣です。</p>"; }
+            }
+            return { title, score, desc, advice };
+        };
+        
+        const drawScoreChart = (data) => {
+            const chartTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+            const chartPrimaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            const chartBgColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+
+            Highcharts.chart('score-chart-container', {
+                chart: { type: 'pie', backgroundColor: 'transparent' }, title: { text: null }, tooltip: { enabled: false },
+                plotOptions: { pie: { innerSize: '70%', borderWidth: 0, dataLabels: { enabled: true, distance: -50, format: '<b>{point.name}</b><br>{point.percentage:.0f} 点', style: { fontWeight: 'bold', color: chartTextColor, fontSize: '1.5rem', textOutline: 'none' }, filter: { property: 'name', operator: '===', value: 'スコア' } } } },
+                series: [{ name: 'スコア', data: [ { name: 'スコア', y: data.score, color: chartPrimaryColor }, { name: ' ', y: 100 - data.score, color: chartBgColor, dataLabels: { enabled: false } } ] }],
+                credits: { enabled: false }
+            });
+        };
+
+        const selectMode = (mode) => {
+            if (isRunning) return;
+            testMode = mode;
+            blindModeBtn.classList.toggle('active', testMode === 'blind');
+            watchModeBtn.classList.toggle('active', testMode !== 'blind');
+            if (!isRunning) timerDisplay.classList.toggle('hidden', testMode === 'blind');
+        };
+
+        const toggleModal = (modal, show) => modal.classList.toggle('visible', show);
+
+        controlButton.addEventListener('click', () => isRunning ? stopTimer() : startTimer());
+        targetTimeInput.addEventListener('change', () => { targetTime = parseFloat(targetTimeInput.value); if (isNaN(targetTime) || targetTime < 1) { targetTime = 1; targetTimeInput.value = 1; } });
+        blindModeBtn.addEventListener('click', () => selectMode('blind'));
+        watchModeBtn.addEventListener('click', () => selectMode('watch'));
+        showGuideBtn.addEventListener('click', () => toggleModal(guideModal, true));
+        closeGuideModalBtn.addEventListener('click', () => toggleModal(guideModal, false));
+        guideModal.addEventListener('click', (e) => { if (e.target === guideModal) toggleModal(guideModal, false); });
+        showAnalysisBtn.addEventListener('click', () => { if (lastAnalysisData) { drawScoreChart(lastAnalysisData); } toggleModal(analysisModal, true); });
+        closeAnalysisModalBtn.addEventListener('click', () => toggleModal(analysisModal, false));
+        analysisModal.addEventListener('click', (e) => { if (e.target === analysisModal) toggleModal(analysisModal, false); });
+
+        timerDisplay.textContent = (0).toFixed(3); selectMode('watch');
+    </script>
+</body>
+</html>
